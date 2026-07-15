@@ -13,33 +13,34 @@ export default function WeatherAlert({ weatherData, darkMode }: WeatherAlertProp
   const [loading, setLoading] = useState<boolean>(false);
   const [offline, setOffline] = useState<boolean>(false);
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = () => {
     if (!weatherData) return;
     setLoading(true);
-    try {
-      const response = await fetch("/api/gemini/alerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          location: weatherData.location.name,
-          weather: {
-            temp: weatherData.current.temperature_2m,
-            feelsLike: weatherData.current.apparent_temperature,
-            windSpeed: weatherData.current.wind_speed_10m,
-            code: weatherData.current.weather_code,
-          },
-        }),
-      });
-      const data = await response.json();
-      setAlertText(data.text || "All clear! Ideal conditions ahead.");
-      setOffline(!!data.offline);
-    } catch (err) {
-      console.error(err);
-      setAlertText("All clear! Standard safety boundaries expected.");
+    setTimeout(() => {
+      const temp = weatherData.current.temperature_2m;
+      const winds = weatherData.current.wind_speed_10m;
+      const code = weatherData.current.weather_code;
+
+      let alert = "All clear! Ideal conditions ahead. No immediate safety hazards identified in the local atmospheric columns.";
+
+      if (winds > 30) {
+        alert = `Advisory: High wind gusts of ${winds} km/h detected in the area. Secure loose outdoor items and exercise caution when traveling or hiking.`;
+      } else if (code >= 95 && code <= 99) {
+        alert = "Thunderstorm Warning! Severe lightning and electrical storms detected in local atmospheric columns. Seek shelter indoors immediately.";
+      } else if ((code >= 51 && code <= 57) || (code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
+        alert = "Active Precipitation Advisory. Wet road conditions and lowered visibility. Drive with caution and carry wet-weather gear.";
+      } else if (temp < 0) {
+        alert = `Freezing Temperature Warning (${Math.round(temp)}°C). Risk of slippery black ice on walking paths and roads. Stay heavily insulated.`;
+      } else if (temp > 35) {
+        alert = `Excessive Heat Advisory (${Math.round(temp)}°C). Stay hydrated, avoid direct sun exposure during peak hours, and seek air-conditioned environments.`;
+      } else if (code === 45 || code === 48) {
+        alert = "Visibility Advisory: Dense fog or mist reported in the local region. Reduce driving speeds and use low-beam fog lights.";
+      }
+
+      setAlertText(alert);
       setOffline(true);
-    } finally {
       setLoading(false);
-    }
+    }, 500);
   };
 
   useEffect(() => {

@@ -37,28 +37,110 @@ export default function ItineraryShuffler({
     setActivities((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const shuffleItinerary = async () => {
+  const shuffleItinerary = () => {
     if (activities.length === 0 || !dailyForecast) return;
     setLoading(true);
-    try {
-      const response = await fetch("/api/gemini/shuffle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activities,
-          dailyForecast,
-          location: locationName,
-        }),
+    setTimeout(() => {
+      // Create schedules
+      const matchedSchedule: ShuffledActivity[] = [];
+      const days = dailyForecast.time.map((t, idx) => {
+        const dateObj = new Date(t);
+        const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+        return {
+          dayName,
+          tempMax: dailyForecast.temperature_2m_max[idx],
+          precipProb: dailyForecast.precipitation_probability_max[idx],
+          weatherCode: dailyForecast.weather_code[idx],
+        };
       });
-      const data = await response.json();
-      if (data.schedule) {
-        setSchedule(data.schedule);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
+
+      // Loop through each activity and map to a day
+      activities.forEach((activity) => {
+        const actLower = activity.toLowerCase();
+        
+        // Find best day for this activity
+        // We will assign a score to each day for this activity
+        const scoredDays = days.map((day, dayIdx) => {
+          let score = 50; // base score
+
+          const isOutdoor = actLower.includes("hike") || 
+                            actLower.includes("surf") || 
+                            actLower.includes("beach") || 
+                            actLower.includes("photo") || 
+                            actLower.includes("walk") || 
+                            actLower.includes("park") || 
+                            actLower.includes("sightsee") || 
+                            actLower.includes("climb") || 
+                            actLower.includes("sport") || 
+                            actLower.includes("outdoor");
+
+          const isIndoor = actLower.includes("museum") || 
+                           actLower.includes("cafe") || 
+                           actLower.includes("dine") || 
+                           actLower.includes("dining") || 
+                           actLower.includes("restaurant") || 
+                           actLower.includes("shop") || 
+                           actLower.includes("gallery") || 
+                           actLower.includes("cinema") || 
+                           actLower.includes("spa") || 
+                           actLower.includes("indoor");
+
+          if (isOutdoor) {
+            // outdoor prefers low precipitation
+            score -= day.precipProb * 0.8;
+            // outdoor prefers pleasant temperatures (15 to 26)
+            if (day.tempMax >= 15 && day.tempMax <= 26) {
+              score += 20;
+            } else if (day.tempMax < 10 || day.tempMax > 32) {
+              score -= 15;
+            }
+          } else if (isIndoor) {
+            // indoor is fine with high precipitation
+            if (day.precipProb > 40) {
+              score += 20;
+            }
+            // indoor is fine/prefers extreme temps
+            if (day.tempMax < 12 || day.tempMax > 30) {
+              score += 10;
+            }
+          }
+
+          // Spread out index to avoid assigning everything to the exact same day
+          score -= (dayIdx % 3) * 2;
+
+          return { day, score, dayIdx };
+        });
+
+        // Sort scored days descending
+        scoredDays.sort((a, b) => b.score - a.score);
+        const bestDay = scoredDays[0].day;
+
+        // Generate reason and tip deterministically based on actual weather
+        let reason = "";
+        let tip = "";
+
+        if (bestDay.precipProb > 40) {
+          reason = `Rain probability is high (${bestDay.precipProb}%) on ${bestDay.dayName}, making it the perfect timing for this activity.`;
+          tip = "Carry an umbrella and stick to covered areas or cozy interiors.";
+        } else if (bestDay.tempMax < 10) {
+          reason = `Brisk temperatures of ${Math.round(bestDay.tempMax)}°C on ${bestDay.dayName} provide a refreshing climate for this plan.`;
+          tip = "Dress in multiple insulated layers to stay comfortable throughout.";
+        } else {
+          reason = `Beautiful dry conditions (Precip: ${bestDay.precipProb}%) and a comfortable high of ${Math.round(bestDay.tempMax)}°C on ${bestDay.dayName} offer perfect conditions.`;
+          tip = "Bring sunglasses and stay hydrated while enjoying the fantastic weather.";
+        }
+
+        matchedSchedule.push({
+          activity,
+          optimizedDay: bestDay.dayName,
+          reason,
+          tip,
+        });
+      });
+
+      setSchedule(matchedSchedule);
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (

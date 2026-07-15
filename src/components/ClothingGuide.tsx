@@ -12,28 +12,59 @@ export default function ClothingGuide({ weatherData, darkMode }: ClothingGuidePr
   const [guide, setGuide] = useState<ClothingGuideType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const fetchClothingGuide = async () => {
+  const fetchClothingGuide = () => {
     if (!weatherData) return;
     setLoading(true);
-    try {
-      const response = await fetch("/api/gemini/clothing-guide", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          weather: {
-            temp: weatherData.current.temperature_2m,
-            feelsLike: weatherData.current.apparent_temperature,
-            code: weatherData.current.weather_code,
-          },
-        }),
+    setTimeout(() => {
+      const temp = weatherData.current.temperature_2m;
+      const code = weatherData.current.weather_code;
+      const winds = weatherData.current.wind_speed_10m;
+
+      let baseLayer = "Breathable short-sleeve t-shirt or linen shirt.";
+      let middleLayer = "None (keep a light cardigan or hoodie in your bag just in case).";
+      let outerLayer = "None needed. Enjoy the comfortable temperatures!";
+      const accessories = ["Sunglasses", "Sunscreen (recommended)"];
+
+      const isRainy = (code >= 51 && code <= 57) || (code >= 61 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
+      const isSnowy = (code >= 71 && code <= 77) || (code >= 85 && code <= 86);
+
+      if (temp < 0) {
+        baseLayer = "Thermal underwear (merino wool/synthetic) and long-sleeve top.";
+        middleLayer = "Heavy fleece sweater, down vest, or premium knit wool layer.";
+        outerLayer = "Windproof and waterproof heavy insulated parka or down jacket.";
+        accessories.push("Warm beanie", "Thick gloves", "Thermal wool socks", "Scarf");
+      } else if (temp < 10) {
+        baseLayer = "Long-sleeve t-shirt or light thermal crewneck.";
+        middleLayer = "Fleece jacket, lightweight down sweater, or warm sweater.";
+        outerLayer = "Trench coat, padded bomber jacket, or thick wool coat.";
+        accessories.push("Light scarf", "Warm socks");
+      } else if (temp < 18) {
+        baseLayer = "Short-sleeve cotton shirt or long-sleeve button-down.";
+        middleLayer = "Light knit sweater, crewneck sweatshirt, or structured blazer.";
+        outerLayer = "Denim jacket, leather jacket, or lightweight windbreaker shell.";
+      } else if (temp >= 28) {
+        baseLayer = "Ultra-breathable tank top, loose t-shirt, or linen apparel.";
+        middleLayer = "None. High temperature conditions.";
+        outerLayer = "None.";
+        accessories.push("Sun hat / Cap", "UV-protection glasses");
+      }
+
+      if (isRainy) {
+        outerLayer = "Waterproof hardshell jacket or hooded rain slicker.";
+        accessories.push("Compact Umbrella", "Water-resistant shoes/boots");
+      } else if (isSnowy) {
+        outerLayer = "Water-resistant insulated snow jacket.";
+        accessories.push("Waterproof winter boots", "Warm mittens");
+      }
+
+      setGuide({
+        baseLayer,
+        middleLayer,
+        outerLayer,
+        accessories,
       });
-      const data = await response.json();
-      setGuide(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
       setLoading(false);
-    }
+    }, 500);
   };
 
   useEffect(() => {

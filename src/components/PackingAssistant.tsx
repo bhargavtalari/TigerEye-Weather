@@ -27,29 +27,92 @@ export default function PackingAssistant({
   const [newItem, setNewItem] = useState("");
   const [newCategory, setNewCategory] = useState("Clothing");
 
-  const generatePackingList = async () => {
-    if (!intent.trim()) return;
+  const generatePackingList = () => {
     setLoading(true);
-    try {
-      const response = await fetch("/api/gemini/packing-list", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          intent,
-          location: locationName,
-          weatherSummary,
-        }),
-      });
-      const data = await response.json();
-      if (data.items) {
-        setItems(data.items);
-        setCheckedItems({});
+    setTimeout(() => {
+      // Deterministic generation
+      const newItems: PackingItem[] = [
+        // Standard essential items
+        { name: "Passport / Photo ID", category: "Documents", quantity: "1" },
+        { name: "Wallet & Payment Cards", category: "Documents", quantity: "1" },
+        { name: "Phone Charger & Power Bank", category: "Gear", quantity: "1" },
+        { name: "Toothbrush & Toothpaste", category: "Toiletries", quantity: "1" },
+        { name: "Deodorant & Skincare", category: "Toiletries", quantity: "1" },
+      ];
+
+      // Parse weather summary (or detect temp range)
+      const tempMatch = weatherSummary.match(/Current:\s*(-?\d+)/i);
+      const temp = tempMatch ? parseInt(tempMatch[1], 10) : 18;
+
+      // Weather-based clothes
+      if (temp < 10) {
+        newItems.push(
+          { name: "Heavy Winter Coat", category: "Clothing", quantity: "1" },
+          { name: "Thermal Innerwear", category: "Clothing", quantity: "2" },
+          { name: "Warm Woolen Beanie", category: "Clothing", quantity: "1" },
+          { name: "Gloves / Mittens", category: "Clothing", quantity: "1" },
+          { name: "Thick Wool Socks", category: "Clothing", quantity: "3" }
+        );
+      } else if (temp < 20) {
+        newItems.push(
+          { name: "Light Sweater / Cardigan", category: "Clothing", quantity: "2" },
+          { name: "Denim or Windbreaker Jacket", category: "Clothing", quantity: "1" },
+          { name: "Long Pants / Jeans", category: "Clothing", quantity: "3" },
+          { name: "Comfortable Sneakers", category: "Clothing", quantity: "1" }
+        );
+      } else {
+        newItems.push(
+          { name: "Short Sleeve T-Shirts", category: "Clothing", quantity: "5" },
+          { name: "Breathable Shorts / Skirts", category: "Clothing", quantity: "3" },
+          { name: "Sunglasses", category: "Gear", quantity: "1" },
+          { name: "Sunscreen lotion (SPF 50)", category: "Toiletries", quantity: "1" }
+        );
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
+
+      // Rain/wet check
+      const lowerSummary = weatherSummary.toLowerCase();
+      if (lowerSummary.includes("rain") || lowerSummary.includes("shower") || lowerSummary.includes("drizzle") || lowerSummary.includes("precip")) {
+        newItems.push(
+          { name: "Compact Umbrella", category: "Gear", quantity: "1" },
+          { name: "Waterproof Rain Shell", category: "Clothing", quantity: "1" }
+        );
+      }
+
+      // Intent parsing
+      const cleanIntent = intent.toLowerCase();
+      if (cleanIntent.includes("hike") || cleanIntent.includes("hiking") || cleanIntent.includes("climb") || cleanIntent.includes("trail")) {
+        newItems.push(
+          { name: "Sturdy Hiking Boots", category: "Clothing", quantity: "1" },
+          { name: "Reusable Water Flask", category: "Gear", quantity: "1" },
+          { name: "Backpack / Daypack", category: "Gear", quantity: "1" },
+          { name: "First-Aid Kit (compact)", category: "Gear", quantity: "1" }
+        );
+      }
+      if (cleanIntent.includes("dine") || cleanIntent.includes("dining") || cleanIntent.includes("formal") || cleanIntent.includes("restaurant")) {
+        newItems.push(
+          { name: "Formal / Evening Wear", category: "Clothing", quantity: "1" },
+          { name: "Dress Shoes / Heels", category: "Clothing", quantity: "1" }
+        );
+      }
+      if (cleanIntent.includes("swim") || cleanIntent.includes("pool") || cleanIntent.includes("beach") || cleanIntent.includes("lake")) {
+        newItems.push(
+          { name: "Swimwear / Swimsuit", category: "Clothing", quantity: "2" },
+          { name: "Quick-Dry Beach Towel", category: "Gear", quantity: "1" },
+          { name: "Flip Flops / Sandals", category: "Clothing", quantity: "1" }
+        );
+      }
+      if (cleanIntent.includes("business") || cleanIntent.includes("work") || cleanIntent.includes("present") || cleanIntent.includes("conference")) {
+        newItems.push(
+          { name: "Business Suit / Blazer", category: "Clothing", quantity: "1" },
+          { name: "Laptop & Charger", category: "Gear", quantity: "1" },
+          { name: "Professional Notepad", category: "Documents", quantity: "1" }
+        );
+      }
+
+      setItems(newItems);
+      setCheckedItems({});
       setLoading(false);
-    }
+    }, 800);
   };
 
   const handleToggleCheck = (index: number) => {

@@ -38,46 +38,42 @@ export default function Chatbot({ weatherData, darkMode }: ChatbotProps) {
     setInput("");
     setLoading(true);
 
-    try {
-      const response = await fetch("/api/gemini/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          weatherContext: weatherData
-            ? {
-                current: weatherData.current,
-                daily: weatherData.daily,
-              }
-            : null,
-          location: weatherData ? weatherData.location.name : "unknown",
-        }),
-      });
+    setTimeout(() => {
+      const cleanInput = input.toLowerCase();
+      let reply = "That's a great question! As your local weather assistant, I recommend checking the 7-day forecast outlook and adjusting your outdoor activities or packing checklists accordingly.";
 
-      const data = await response.json();
+      const locationName = weatherData ? weatherData.location.name : "this city";
+      const currentTemp = weatherData ? Math.round(weatherData.current.temperature_2m) : null;
+      const currentWind = weatherData ? weatherData.current.wind_speed_10m : null;
+
+      if (cleanInput.includes("rain") || cleanInput.includes("wet") || cleanInput.includes("shower") || cleanInput.includes("precip")) {
+        reply = `For rainy forecasts in ${locationName}, consider visiting local museums, indoor art galleries, covered markets, or cozy cafes. Always keep a waterproof shell and compact umbrella on hand!`;
+      } else if (cleanInput.includes("cold") || cleanInput.includes("freeze") || cleanInput.includes("snow") || cleanInput.includes("winter")) {
+        reply = `In cold climates like ${locationName}, remember the rule of three layers: a snug base layer (merino wool), an insulating fleece or down mid-layer, and a protective outer shell. Keep extremities warm with gloves and beanies!`;
+      } else if (cleanInput.includes("warm") || cleanInput.includes("hot") || cleanInput.includes("summer") || cleanInput.includes("sun")) {
+        reply = `For warmer days, prioritize lightweight, breathable fabrics like linen or cotton, and wear sunscreen (SPF 50), sunglasses, and a sun cap to protect against UV exposure.`;
+      } else if (cleanInput.includes("pack") || cleanInput.includes("packing") || cleanInput.includes("list")) {
+        reply = `Our Packing Assistant is perfect for this! Type your trip intent (like "hiking" or "formal dinner") above, click "Generate List," and I will customize a smart list based on ${locationName}'s weather.`;
+      } else if (cleanInput.includes("hike") || cleanInput.includes("hiking") || cleanInput.includes("outdoor") || cleanInput.includes("trail")) {
+        reply = `For outdoor activities like hiking, check the 7-day outlook. Schedule your hikes on days with the lowest precipitation probability and mildest wind speeds. Be sure to carry a water flask!`;
+      } else if (cleanInput.includes("weather") || cleanInput.includes("temp") || cleanInput.includes("current")) {
+        if (weatherData && currentTemp !== null) {
+          reply = `In ${locationName} right now, the temperature is ${currentTemp}°C with feels-like conditions of ${Math.round(weatherData.current.apparent_temperature)}°C, and wind speeds of ${currentWind} km/h.`;
+        } else {
+          reply = "Search for a city above first to see current live weather parameters and get deep analytical insights!";
+        }
+      }
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.text || "I was unable to retrieve a response. Please verify details.",
+        content: reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error(err);
-      const errorMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I am having trouble connecting to the weather intelligence system.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
       setLoading(false);
-    }
+    }, 800);
   };
 
   const handleClearChat = () => {

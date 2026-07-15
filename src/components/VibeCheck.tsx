@@ -13,34 +13,40 @@ export default function VibeCheck({ weatherData, darkMode }: VibeCheckProps) {
   const [loading, setLoading] = useState<boolean>(false);
   const [offline, setOffline] = useState<boolean>(false);
 
-  const fetchVibe = async () => {
+  const fetchVibe = () => {
     if (!weatherData) return;
     setLoading(true);
-    try {
-      const response = await fetch("/api/gemini/vibe-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          location: `${weatherData.location.name}, ${weatherData.location.country}`,
-          weather: {
-            temp: weatherData.current.temperature_2m,
-            feelsLike: weatherData.current.apparent_temperature,
-            tempMax: weatherData.daily.temperature_2m_max[0],
-            tempMin: weatherData.daily.temperature_2m_min[0],
-            code: weatherData.current.weather_code,
-          },
-        }),
-      });
-      const data = await response.json();
-      setVibe(data.text || "A calm day to reset your vectors.");
-      setOffline(!!data.offline);
-    } catch (err) {
-      console.error(err);
-      setVibe("A serene atmosphere perfect for reflective planning. Seek comfortable layers and carry on.");
+    setTimeout(() => {
+      const temp = weatherData.current.temperature_2m;
+      const code = weatherData.current.weather_code;
+      const winds = weatherData.current.wind_speed_10m;
+      let generatedVibe = "A serene atmosphere perfect for reflective planning. Seek comfortable layers and carry on.";
+
+      const isRainy = (code >= 51 && code <= 57) || (code >= 61 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
+      const isSnowy = (code >= 71 && code <= 77) || (code >= 85 && code <= 86);
+
+      if (isRainy) {
+        generatedVibe = "Wet and moody. The sound of rain brings a quiet, meditative backdrop to the city. Best for cozy indoor plans, galleries, or warm coffee with a sturdy umbrella.";
+      } else if (isSnowy) {
+        generatedVibe = "A magical, quiet blanket of winter flurry. Keep yourself fully insulated, enjoy the scenic snowfall, and watch your step on any icy walkways!";
+      } else if (temp < 5) {
+        generatedVibe = "Biting cold with a crisp, bracing wind. The atmosphere is sharp and clean. Perfect for wrapping up in heavy coats and treating yourself to a hot beverage.";
+      } else if (temp < 15) {
+        generatedVibe = "Brisk, chilly, and wonderfully fresh. A classic cool day requiring warm sweaters and stylish coats. Ideal for active city exploration and long brisk walks.";
+      } else if (temp < 25) {
+        generatedVibe = "Superb, comfortable, and temperate conditions. A light jacket or denim layer is all you need. Effortless vibes for outdoor cafes, sightseeing, and parks.";
+      } else {
+        generatedVibe = "Warm, bright, and vibrant summer rays. The city is basking in gorgeous sunshine. Apply sunscreen, grab your sunglasses, and embrace outdoor leisure!";
+      }
+
+      if (winds > 25) {
+        generatedVibe += " Warning: strong wind gusts are active, adding a wild and breezy element to your outdoor ventures.";
+      }
+
+      setVibe(generatedVibe);
       setOffline(true);
-    } finally {
       setLoading(false);
-    }
+    }, 600);
   };
 
   useEffect(() => {
