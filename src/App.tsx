@@ -100,13 +100,68 @@ export default function App() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to fetch weather metrics.");
+      // 1. Geocoding API: First, fetch the latitude, longitude, name, admin1, and country
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+      const geoResponse = await fetch(geoUrl);
+      if (!geoResponse.ok) {
+        throw new Error("Failed to contact the geocoding service.");
       }
-      const data = await response.json();
-      setWeather(data);
+      const geoData = await geoResponse.json();
+
+      // 2. Error Check: If geoData.results is empty or undefined, throw an error
+      if (!geoData.results || geoData.results.length === 0) {
+        throw new Error(`City "${city}" not found.`);
+      }
+
+      const geoResult = geoData.results[0];
+      const { latitude, longitude, name, admin1, country } = geoResult;
+
+      // 3. Weather API: Fetch forecast payload using coordinates
+      const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&timezone=auto`;
+      const forecastResponse = await fetch(forecastUrl);
+      if (!forecastResponse.ok) {
+        throw new Error("Failed to retrieve weather forecast data.");
+      }
+      const forecastData = await forecastResponse.json();
+
+      // 4. State Hydration: Combine into the exact schema layout expected by WeatherData type
+      const weatherPayload: WeatherData = {
+        location: {
+          name: name || city,
+          country: country || "",
+          region: admin1 || "",
+          latitude,
+          longitude,
+        },
+        current: {
+          time: forecastData.current.time,
+          interval: forecastData.current.interval,
+          temperature_2m: forecastData.current.temperature_2m,
+          relative_humidity_2m: forecastData.current.relative_humidity_2m,
+          apparent_temperature: forecastData.current.apparent_temperature,
+          is_day: forecastData.current.is_day,
+          precipitation: forecastData.current.precipitation,
+          rain: forecastData.current.rain,
+          showers: forecastData.current.showers,
+          snowfall: forecastData.current.snowfall,
+          weather_code: forecastData.current.weather_code,
+          cloud_cover: forecastData.current.cloud_cover,
+          wind_speed_10m: forecastData.current.wind_speed_10m,
+        },
+        daily: {
+          time: forecastData.daily.time,
+          weather_code: forecastData.daily.weather_code,
+          temperature_2m_max: forecastData.daily.temperature_2m_max,
+          temperature_2m_min: forecastData.daily.temperature_2m_min,
+          apparent_temperature_max: forecastData.daily.apparent_temperature_max,
+          apparent_temperature_min: forecastData.daily.apparent_temperature_min,
+          precipitation_sum: forecastData.daily.precipitation_sum,
+          precipitation_probability_max: forecastData.daily.precipitation_probability_max,
+          wind_speed_10m_max: forecastData.daily.wind_speed_10m_max,
+        },
+      };
+
+      setWeather(weatherPayload);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "An error occurred fetching weather data.");
