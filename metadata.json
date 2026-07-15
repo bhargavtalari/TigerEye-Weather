@@ -1,0 +1,6 @@
+{
+  "name": "TigerEye Weather",
+  "description": "A single-page Weather Planning App featuring real-time and 7-day forecasts, clothing guides, custom packing lists, activity shufflers, and a smart chatbot helper.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
