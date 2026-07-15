@@ -16,6 +16,7 @@ import {
   Info,
   Calendar,
   Layers,
+  MapPin,
 } from "lucide-react";
 import { WeatherData } from "./types";
 import WeatherAlert from "./components/WeatherAlert";
@@ -89,11 +90,36 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
   // Load weather for default city on mount
   useEffect(() => {
     fetchWeather("San Francisco");
   }, []);
+
+  // Fetch city suggestions as the user types
+  useEffect(() => {
+    if (!cityInput.trim() || cityInput.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityInput)}&count=6&language=en&format=json`;
+        const res = await fetch(geoUrl);
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data.results || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch suggestions:", err);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [cityInput]);
 
   const fetchWeather = async (city: string) => {
     if (!city.trim()) return;
@@ -173,6 +199,7 @@ export default function App() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchWeather(cityInput);
+    setShowSuggestions(false);
   };
 
   const currentDetails = weather ? getWeatherDetails(weather.current.weather_code) : null;
@@ -237,7 +264,12 @@ export default function App() {
               <input
                 type="text"
                 value={cityInput}
-                onChange={(e) => setCityInput(e.target.value)}
+                onChange={(e) => {
+                  setCityInput(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder="Enter city (e.g. London, Tokyo)..."
                 id="search-input-desktop"
                 className={`w-[260px] text-xs px-3.5 py-2.5 pl-10 rounded-full border outline-none font-sans transition-all ${
@@ -247,6 +279,40 @@ export default function App() {
                 }`}
               />
               <Search className="absolute left-3.5 top-3.5 h-3.5 w-3.5 text-zinc-400" />
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  className={`absolute z-50 left-0 right-0 top-full mt-2 rounded-2xl border shadow-xl max-h-64 overflow-y-auto ${
+                    darkMode
+                      ? "bg-brand-dark-card border-zinc-800 text-zinc-100 divide-zinc-800/40"
+                      : "bg-white border-[#dfd6c6] text-brand-dark-card divide-zinc-100"
+                  } divide-y`}
+                >
+                  {suggestions.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onMouseDown={() => {
+                        setCityInput(item.name);
+                        setShowSuggestions(false);
+                        fetchWeather(item.name);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-xs font-sans transition-colors flex items-start gap-2.5 ${
+                        darkMode ? "hover:bg-zinc-800/50" : "hover:bg-zinc-100/80"
+                      }`}
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-brand-primary shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{item.name}</span>
+                        <span className="text-[10px] text-zinc-400">
+                          {[item.admin1, item.country].filter(Boolean).join(", ")}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </form>
 
             {/* Light/Dark Mode Toggle */}
@@ -269,7 +335,12 @@ export default function App() {
           <input
             type="text"
             value={cityInput}
-            onChange={(e) => setCityInput(e.target.value)}
+            onChange={(e) => {
+              setCityInput(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder="Search city name..."
             id="search-input-mobile"
             className={`w-full text-xs px-3.5 py-3 pl-11 rounded-xl border outline-none font-sans transition-all ${
@@ -279,6 +350,40 @@ export default function App() {
             }`}
           />
           <Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-400" />
+
+          {/* Suggestions Dropdown for Mobile */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div
+              className={`absolute z-50 left-0 right-0 top-full mt-2 rounded-2xl border shadow-xl max-h-64 overflow-y-auto ${
+                darkMode
+                  ? "bg-brand-dark-card border-zinc-800 text-zinc-100 divide-zinc-800/40"
+                  : "bg-white border-[#dfd6c6] text-brand-dark-card divide-zinc-100"
+              } divide-y`}
+            >
+              {suggestions.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onMouseDown={() => {
+                    setCityInput(item.name);
+                    setShowSuggestions(false);
+                    fetchWeather(item.name);
+                  }}
+                  className={`w-full text-left px-4 py-3 text-xs font-sans transition-colors flex items-start gap-2.5 ${
+                    darkMode ? "hover:bg-zinc-800/50" : "hover:bg-zinc-100/80"
+                  }`}
+                >
+                  <MapPin className="h-3.5 w-3.5 text-brand-primary shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{item.name}</span>
+                    <span className="text-[10px] text-zinc-400">
+                      {[item.admin1, item.country].filter(Boolean).join(", ")}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </form>
 
         {/* Error Handling Banner */}

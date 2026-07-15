@@ -40,7 +40,10 @@ export default function TripAdvisor({ weatherData, darkMode }: TripAdvisorProps)
 
   // Load saved plans on mount
   useEffect(() => {
-    const loaded = localStorage.getItem("skyline_saved_plans");
+    let loaded = localStorage.getItem("tigereye_saved_plans");
+    if (!loaded) {
+      loaded = localStorage.getItem("skyline_saved_plans");
+    }
     if (loaded) {
       try {
         setSavedPlans(JSON.parse(loaded));
@@ -67,7 +70,7 @@ export default function TripAdvisor({ weatherData, darkMode }: TripAdvisorProps)
 
     const updated = [newPlan, ...savedPlans];
     setSavedPlans(updated);
-    localStorage.setItem("skyline_saved_plans", JSON.stringify(updated));
+    localStorage.setItem("tigereye_saved_plans", JSON.stringify(updated));
 
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
@@ -77,7 +80,7 @@ export default function TripAdvisor({ weatherData, darkMode }: TripAdvisorProps)
     e.stopPropagation();
     const updated = savedPlans.filter((p) => p.id !== id);
     setSavedPlans(updated);
-    localStorage.setItem("skyline_saved_plans", JSON.stringify(updated));
+    localStorage.setItem("tigereye_saved_plans", JSON.stringify(updated));
   };
 
   const handleLoadPlan = (plan: SavedTripPlan) => {
@@ -236,7 +239,7 @@ export default function TripAdvisor({ weatherData, darkMode }: TripAdvisorProps)
           }`}
         >
           <MessageSquare className="h-4 w-4" />
-          SkyLine Chat
+          TigerEye Chat
         </button>
       </div>
 
