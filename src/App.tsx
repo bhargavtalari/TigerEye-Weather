@@ -23,6 +23,7 @@ import WeatherAlert from "./components/WeatherAlert";
 import VibeCheck from "./components/VibeCheck";
 import ClothingGuide from "./components/ClothingGuide";
 import TripAdvisor from "./components/TripAdvisor";
+import weatherLogo from "./assets/images/weather_app_logo_1784872524229.jpg";
 
 // WMO Weather Code helper
 export function getWeatherDetails(code: number) {
@@ -247,12 +248,17 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="relative h-11 w-11 rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg shadow-amber-500/20 group bg-zinc-900 shrink-0 flex items-center justify-center">
               <img
-                src="/src/assets/images/weather_app_logo_1784872524229.jpg"
+                src={weatherLogo}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/logo.jpg";
+                }}
                 alt="Tiger-Eye Weather Logo"
-                referrerPolicy="no-referrer"
-                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300 relative z-10"
               />
-              <div className="absolute inset-0 ring-1 ring-inset ring-amber-500/20 rounded-2xl pointer-events-none" />
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 text-amber-400">
+                <Sun className="h-6 w-6 text-amber-400 animate-[spin_12s_linear_infinite]" />
+              </div>
+              <div className="absolute inset-0 ring-1 ring-inset ring-amber-500/20 rounded-2xl pointer-events-none z-20" />
             </div>
             <div>
               <h1 className="font-display font-bold text-xl tracking-tight uppercase bg-gradient-to-r from-amber-400 via-amber-200 to-orange-400 bg-clip-text text-transparent">
