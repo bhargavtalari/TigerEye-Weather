@@ -239,7 +239,7 @@ export default function TripAdvisor({ weatherData, darkMode }: TripAdvisorProps)
           }`}
         >
           <MessageSquare className="h-4 w-4" />
-          TigerEye Chat
+          Tiger-Eye Chat
         </button>
       </div>
 

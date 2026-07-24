@@ -14,7 +14,7 @@ export default function Chatbot({ weatherData, darkMode }: ChatbotProps) {
       id: "init",
       role: "assistant",
       content:
-        "Welcome! I am TigerEye Guide, your smart weather planning copilot. Search for a city, select travel dates, or ask me anything like 'What should I do if it rains in Paris?' or 'Suggest an outdoor gear checklist!'",
+        "Welcome! I am Tiger-Eye Guide, your smart weather planning copilot. Search for a city, select travel dates, or ask me anything like 'What should I do if it rains in Paris?' or 'Suggest an outdoor gear checklist!'",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -100,7 +100,7 @@ export default function Chatbot({ weatherData, darkMode }: ChatbotProps) {
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-brand-primary" />
           <span className="text-xs font-display font-semibold uppercase tracking-wider">
-            TigerEye Copilot Chat
+            Tiger-Eye Copilot Chat
           </span>
         </div>
         <button

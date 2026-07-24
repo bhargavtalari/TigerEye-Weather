@@ -85,7 +85,7 @@ export function getWeatherDetails(code: number) {
 }
 
 export default function App() {
-  const [cityInput, setCityInput] = useState<string>("San Francisco");
+  const [cityInput, setCityInput] = useState<string>("Hyderabad");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -95,7 +95,7 @@ export default function App() {
 
   // Load weather for default city on mount
   useEffect(() => {
-    fetchWeather("San Francisco");
+    fetchWeather("Hyderabad");
   }, []);
 
   // Fetch city suggestions as the user types
@@ -244,13 +244,19 @@ export default function App() {
       <div className="max-w-7xl mx-auto px-4 py-6 relative z-10 space-y-6">
         {/* Header Branding Row */}
         <header className="flex items-center justify-between gap-4 border-b border-zinc-500/10 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-2xl bg-brand-primary flex items-center justify-center text-white font-display font-bold text-xl tracking-tight shadow-md shadow-brand-primary/20">
-              T
+          <div className="flex items-center gap-3">
+            <div className="relative h-11 w-11 rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg shadow-amber-500/20 group bg-zinc-900 shrink-0 flex items-center justify-center">
+              <img
+                src="/src/assets/images/weather_app_logo_1784872524229.jpg"
+                alt="Tiger-Eye Weather Logo"
+                referrerPolicy="no-referrer"
+                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 ring-1 ring-inset ring-amber-500/20 rounded-2xl pointer-events-none" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-lg tracking-tight uppercase">
-                TigerEye Weather
+              <h1 className="font-display font-bold text-xl tracking-tight uppercase bg-gradient-to-r from-amber-400 via-amber-200 to-orange-400 bg-clip-text text-transparent">
+                Tiger-Eye Weather
               </h1>
               <span className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider">
                 Weather Planning Suite
